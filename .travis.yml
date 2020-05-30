@@ -1,0 +1,22 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t kotharinilay/multi-container-demo -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true kotharinilay/multi-container-demo npm test -- --coverage
+
+after_success:
+    - docker build -t kotharinilay/multi-client ./client
+    - docker build -t kotharinilay/multi-server ./server
+    - docker build -t kotharinilay/multi-nginx ./nginx
+    - docker build -t kotharinilay/multi-worker ./worker
+    # Login to docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Push images to docker hub
+    - docker push kotharinilay/multi-client
+    - docker push kotharinilay/multi-server
+    - docker push kotharinilay/multi-nginx
+    - docker push kotharinilay/multi-worker
